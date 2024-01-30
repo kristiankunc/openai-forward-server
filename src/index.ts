@@ -31,8 +31,6 @@ app.get("/define/test", async function (req, res) {
 		return;
 	}
 
-	// make the definitions same type as /define/json [{word: string, definition: string}], do not call api, all definitions are "test"
-
 	const definitions = (words as string[]).map((word) => {
 		return { word: word, definition: `definice - ${word}` };
 	});

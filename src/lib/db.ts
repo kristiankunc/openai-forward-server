@@ -17,7 +17,5 @@ export class Database {
 			data: words,
 			skipDuplicates: true,
 		});
-
-		// this produces a bug where the definitions are not added to the database
 	}
 }
