@@ -11,7 +11,7 @@ const openaiManager = new OpenAIManager(process.env.OPENAI_TOKEN, process.env.AS
 
 app.get("/define/json", async function (req, res) {
 	const words = req.query.words;
-
+	console.log(words);
 	// 3. 12. https://stackoverflow.com/questions/56210870/array-isarray-is-deprecated-now
 	if (!words || !Array.isArray(words)) {
 		res.sendStatus(400);
@@ -19,7 +19,6 @@ app.get("/define/json", async function (req, res) {
 	}
 
 	const definitions = await openaiManager.getDefinitions(words as string[]);
-
 	res.json(definitions);
 });
 

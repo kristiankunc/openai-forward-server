@@ -2,17 +2,18 @@ import OpenAI from "openai";
 import { MessageContentText } from "openai/resources/beta/threads/messages/messages";
 import { Run } from "openai/resources/beta/threads/runs/runs";
 import { Thread } from "openai/resources/beta/threads/threads";
-import { Database } from "./db";
-import { definition } from "@prisma/client";
+
+interface Definition {
+	word: string;
+	definition: string;
+}
 
 // 3. 12. https://platform.openai.com/docs/api-reference/assistants/createAssistant
 export class OpenAIManager {
 	private openai: OpenAI;
-	private apiKey: string;
 	private assistantId: string;
 
 	constructor(apiKey: string, assistantId: string) {
-		this.apiKey = apiKey;
 		this.openai = new OpenAI({
 			apiKey: apiKey,
 		});
@@ -49,19 +50,7 @@ export class OpenAIManager {
 		return (await this.openai.beta.threads.runs.retrieve(thread.id, run.id)).status === "completed";
 	}
 
-	public async getDefinitions(words: string[]): Promise<definition[]> {
-		const alreadyDefinedWords = await Database.getDefinitions(words);
-		for (let definedWord of alreadyDefinedWords) {
-			const definedWordStr = definedWord.word;
-
-			if (words.includes(definedWordStr)) {
-				const index = words.indexOf(definedWordStr);
-				words.splice(index, 1);
-			}
-		}
-
-		if (words.length === 0) return alreadyDefinedWords;
-
+	public async getDefinitions(words: string[]): Promise<Definition[]> {
 		const thread = await this.createThread();
 		await this.addMessage(thread, words.join(" "));
 
@@ -69,10 +58,11 @@ export class OpenAIManager {
 		while (!(await this.isRunCompleted(thread, run))) {
 			this.sleep(100);
 		}
-
-		const newDefintions = JSON.parse(await this.readResponse(thread)) as definition[];
-		Database.addDefinitions(newDefintions);
-
-		return Object.assign({}, alreadyDefinedWords, newDefintions);
+		try {
+			return JSON.parse(await this.readResponse(thread)) as Definition[];
+		} catch (e) {
+			console.error(e);
+			return [];
+		}
 	}
 }
